@@ -1,2 +1,2 @@
-# SRI_Cholera_Stream
-SRI student cholera stream
+# SRI: Cholera Stream 2025
+This is the repo for our SRI stream 
