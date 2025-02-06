@@ -1,0 +1,102 @@
+Fitting SIR Models
+========================================================
+
+In this class excercise we will introduce R code to numerically integrate SIR models and then use `optim` and deterministic SIR models to attempt to recreate the parameters we originally used to estimate the epidemic.
+
+Simulating an Epidemic
+--------------------------------------------------
+First you will need to load code from the coursePlus website. You will want to make sure you set your **R Studio** working directory to the directory you are keeping this code.  You can set your working directory using the GUI at 'Session' or you can use setwd().
+
+```{r}
+source("DeterministicSIR.R")
+```
+
+This code generates a number of functions and parameters.  To see what this code has created type:
+
+```{r}
+ls()
+```
+
+This shows both parameters and functions.  The following functions have been created: plot.ode, legend.ode, dx.dt.SIR, runIncidenceTrackingSIR, dx.dt.IncidenceTrackingSIR, runSIR, fitSIR, among others. To view the code for these functions type any of their names.  For example,
+
+```{r}
+dx.dt.SIR
+```
+
+The function dx.dt.SIR is the function described in module 9 that returns the dS, dI, dR given the state of the system, parameters and time.  runSIR calls dx.dt.SIR multiple times to integrate the system.  To run runSIR to simulate an outbreak with the default parameters run and pass the output to an object named 'firstrun' type:
+
+```{r}
+firstrun<-runSIR()
+```
+
+You can use head to look at the first 6 rows of this object.
+
+We've provided functions to plot the output of a run of runSIR in the function plot.ode as well as a function to add a legend to the plot..  Type:
+
+```{r}
+plot.ode(firstrun)
+legend.ode(200, 0.7, firstrun)
+```
+
+If you want to have a bit more flexibility in how you plot the data, you can plot things without this function this way.
+
+```{r}
+plot(firstrun[,"time"], firstrun[,"S"],col="black",type='l',xlim=c(0,50),ylim=c(0,1),xlab="Time",ylab="State Variable")
+lines(firstrun[,"time"], firstrun[,"I"],col="red",lty=2)
+lines(firstrun[,"time"], firstrun[,"R"],col="green",lty=2)
+legend.ode(60, 0.7, firstrun)
+```
+
+If we want to run runSIR with parameters other than the default, we can change those in the call to runSIR.  The following changes the beta, frequency dependence to be true and the initial state of the system:
+
+```{r}
+secondrun<-runSIR(beta=2, freq.dependent=TRUE, initial.state= c(S=999, I=1, R=0))
+plot.ode(secondrun)
+```
+
+You can visually compare two plots at once by using the par command:
+
+```{r}
+par(mfrow=c(2,1))
+plot.ode(secondrun)
+plot.ode(secondrun)
+```
+
+Now can you run multiple simulations with beta=2, gamma=1 in a frequency dependent model in a 1000 person population and determine (approximately) the critical susceptible fraction?  
+
+```{r}
+#CODE NOT PROVIDED.  YOU DECIDE.
+```
+
+Now, let's look at fitting SIR models to data.
+First, let's read some data in from the modules of epidemics in two different populations of different sizes. From courseplus, download lg_dens_ec.csv and sm_dens_ec.csv.  Then read that data in using:
+
+```{r}
+ld<-read.csv(file="lg_dens_ec.csv",header=TRUE)
+sd<-read.csv(file="sm_dens_ec.csv",header=TRUE)
+```
+
+Then, process this data so its in a format we want using functions from Deterministic.R
+
+```{r}
+eld<-epi.curve(as.Date(ld[,2]))
+ild<-epi.curve.to.incidence.curve(eld)
+esd<-epi.curve(as.Date(sd[,2]))
+isd<-epi.curve.to.incidence.curve(esd)
+```
+
+Here are plots of the data (from Module 9)
+
+```{r}
+plot(eld,col="cornflowerblue")
+```
+
+Now let's try to fit of an SIR model to the data in the large population using fitSIR, which uses optim to change the parameters of the SIR model to match the incidence of the dataset as well as possible.  If you want to watch the fits use par(ask=TRUE) 
+
+fitSIR(ild,initial.states=c(S=1024,CI=1,I=1,R=0),gamma=0.5,beta=0.0001,pretty.graphics=TRUE)
+
+Run this fitSIR using frequency dependent models and density dependent models
+
+To fit both at once, call:
+
+fitSIR(act.incidences=list(ild,isd),initial.states=list(c(S=1024,CI=1,I=1,R=0),c(S=952,CI=1,I=1,R=0)),gamma=0.5,beta=0.8,freq.dependent=TRUE,pretty.graphics=TRUE)  
